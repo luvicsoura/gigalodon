@@ -58,26 +58,9 @@ public class MastodonAPIController{
 			.build();
 
 	private AccountSession session;
-	private static List<String> badDomains = new ArrayList<>();
 
 	static{
 		thread.start();
-		try {
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(
-					MastodonApp.context.getAssets().open("blocks.txt")
-			));
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.isBlank() || line.startsWith("#")) continue;
-				String[] parts = line.replaceAll("\"", "").split("[\s,;]");
-				if (parts.length == 0) continue;
-				String domain = parts[0].toLowerCase().trim();
-				if (domain.isBlank()) continue;
-				badDomains.add(domain);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public MastodonAPIController(@Nullable AccountSession session){
@@ -85,11 +68,8 @@ public class MastodonAPIController{
 	}
 
 	public <T> void submitRequest(final MastodonAPIRequest<T> req){
-		final String host = req.getURL().getHost();
-		final boolean isBad = host == null || badDomains.stream().anyMatch(h -> h.equalsIgnoreCase(host) || host.toLowerCase().endsWith("." + h));
 		thread.postRunnable(()->{
 			try{
-				if (isBad) throw new IllegalArgumentException();
 				if(req.canceled)
 					return;
 				Request.Builder builder=new Request.Builder()
